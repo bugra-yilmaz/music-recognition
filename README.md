@@ -1,6 +1,4 @@
-# musicrecognition_repo
-Optical Music Recognition
-
+# Optical Music Recognition
 This algorithm reads written music notes from note sheet images and converts them into musical outputs.
 It is also able to able to read notes from non-uniformly illuminated, crumpled, old sheets and also from skewed sheet images with an accuracy around 90%.
 
