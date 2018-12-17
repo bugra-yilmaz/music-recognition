@@ -58,13 +58,13 @@ function [ myNotes ] = findNotes( K )
     end
     avgStaffDist = round(avgStaffDist/4);
 
-    clefs = imread('clef.png');
+    clefs = imread('MusicSheets/Templates/gclef.png');
     clefs = 1-clefs;
     [rows_clefs,~] = size(clefs);
     clefs = imresize(clefs,avgStaffDist*8.5/rows_clefs);
     corr_mat_clefs = xcorr2(J_yedek,clefs);
 
-    eighth = imread('kuyruklu.png');
+    eighth = imread('MusicSheets/Templates/eight_d_24px.png');
     eighth = 1 - eighth;
     [rows8,~] = size(eighth);
     eighth = imresize(eighth,avgStaffDist*4/rows8);
