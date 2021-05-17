@@ -15,7 +15,6 @@ def binarize(image):
 
 # Corrects the skew in the given image by rotating it
 def rotate(image, delta=2, limit=20):
-
     def determine_score(arr, angle):
         data = interpolation.rotate(arr, angle, reshape=False, order=0)
         histogram = np.sum(data, axis=1)
@@ -46,7 +45,17 @@ def detect_lines(image):
 
     rows = find_peaks(summed, maximum / 2)
 
-    return rows
+    return rows[0]
+
+
+# Removes staff lines from the image
+def remove_lines(image, rows):
+    length = len(image[0])
+    for row in rows:
+        for i in range(row-1, row+2):
+            image[i] = np.asarray([255] * length)
+
+    return image
 
 
 # Normalized cross-correlation between a template image and an input image
@@ -63,7 +72,7 @@ def normxcorr2(template, image, mode="full"):
     out = fftconvolve(image, ar.conj(), mode=mode)
 
     image = fftconvolve(np.square(image), a1, mode=mode) - \
-            np.square(fftconvolve(image, a1, mode=mode)) / (np.prod(template.shape))
+        np.square(fftconvolve(image, a1, mode=mode)) / (np.prod(template.shape))
 
     image[np.where(image < 0)] = 0
 
