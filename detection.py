@@ -1,10 +1,8 @@
 import os
-
-import numpy as np
-import tensorflow as tf
 import argparse
-
+import numpy as np
 from PIL import Image
+import tensorflow as tf
 
 from object_detection.utils import ops as utils_ops, label_map_util, visualization_utils as vis_util
 
@@ -35,7 +33,6 @@ def run_inference_for_single_image(image, graph):
                 # The following processing is only for single image
                 detection_boxes = tf.squeeze(tensor_dict['detection_boxes'], [0])
                 detection_masks = tf.squeeze(tensor_dict['detection_masks'], [0])
-                # Reframe is required to translate mask from box coordinates to image coordinates and fit the image size.
                 real_num_detection = tf.cast(tensor_dict['num_detections'][0], tf.int32)
                 detection_boxes = tf.slice(detection_boxes, [0, 0], [real_num_detection, -1])
                 detection_masks = tf.slice(detection_masks, [0, 0, 0], [real_num_detection, -1, -1])
@@ -74,13 +71,29 @@ def load_detection_graph(path_to_checkpoint):
 
 
 def load_category_index(path_to_labels, number_of_classes):
-    # Load label map
     label_map = label_map_util.load_labelmap(path_to_labels)
     categories = label_map_util.convert_label_map_to_categories(label_map,
                                                                 max_num_classes=number_of_classes,
                                                                 use_display_name=True)
     category_index = label_map_util.create_category_index(categories)
     return category_index
+
+
+def get_note_locations(image_path, model_path='resources/model.pb', mapping_path='resources/mapping.txt'):
+    os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+    number_of_classes = 100
+
+    detection_graph = load_detection_graph(model_path)
+    category_index = load_category_index(mapping_path, number_of_classes)
+
+    image = Image.open(image_path).convert("RGB")
+    image_np = load_image_into_numpy_array(image)
+
+    output_dict = run_inference_for_single_image(image_np, detection_graph)
+
+    print(output_dict)
+
+    return output_dict
 
 
 if __name__ == "__main__":
@@ -101,7 +114,7 @@ if __name__ == "__main__":
     # Path to frozen detection graph. This is the actual model that is used for the object detection.
     path_to_frozen_inference_graph = args.inference_graph
     path_to_labels = args.label_map
-    number_of_classes = 999999
+    number_of_classes = 1000
     input_image = args.input_image
     output_image = args.output_image
 
