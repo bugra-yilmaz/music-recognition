@@ -1,12 +1,18 @@
 from tools import *
+from detection import get_musical_objects
 
-if __name__ == "__main__":
-    image = cv.imread("data/simple/04.png", 0)
+if __name__ == '__main__':
+    image = cv.imread('data/simple/02.png', 0)
 
     image = binarize(image)
+    image = rotate(image)
+    lines = detect_lines(image)
+    cv.imwrite('temp.png', image)
 
-    angle, image = rotate(image)
+    objects = get_musical_objects('temp.png')
 
-    rows = detect_lines(image)
+    notes = reduce_objects(objects)
 
-    cv.imwrite("output.png", image)
+    music_input = classify_notes(notes, lines)
+
+    play(music_input)
