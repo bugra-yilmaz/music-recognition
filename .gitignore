@@ -1,5 +1,7 @@
 models/
 *.pb
+*.jpg
+*.png
 venv/
 __pycache__/
 *.pyc
