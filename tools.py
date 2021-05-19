@@ -34,7 +34,7 @@ def rotate(image, delta=2, limit=20):
     m = cv.getRotationMatrix2D(center, best_angle, 1.0)
     rotated = cv.warpAffine(image, m, (w, h), flags=cv.INTER_CUBIC, borderMode=cv.BORDER_REPLICATE)
 
-    return best_angle, rotated
+    return rotated
 
 
 # Detects rows of staff lines in the given image
@@ -93,3 +93,18 @@ def scale(corr):
     scaled = np.round((corr - minimum) * scalar).astype(int)
 
     return scaled
+
+
+# Reduces recognized musical objects to musical notes
+def reduce_objects(objects):
+    pass
+
+
+# Classifies musical notes according to previously detected staff lines
+def classify_notes(notes, lines):
+    pass
+
+
+# Produces the music output from the input
+def play(music_input):
+    pass
