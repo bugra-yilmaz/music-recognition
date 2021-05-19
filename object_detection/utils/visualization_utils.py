@@ -750,7 +750,7 @@ def visualize_boxes_and_labels_on_image_array(
           radius=line_thickness / 2,
           use_normalized_coordinates=use_normalized_coordinates)
 
-  return image
+  return box_to_display_str_map, image
 
 
 def add_cdf_image_summary(values, name):

@@ -1,5 +1,4 @@
 import os
-import argparse
 import numpy as np
 from PIL import Image
 import tensorflow as tf
@@ -16,7 +15,6 @@ def load_image_into_numpy_array(image):
 def run_inference_for_single_image(image, graph):
     with graph.as_default():
         with tf.compat.v1.Session() as sess:
-            # Get handles to input and output tensors
             ops = tf.compat.v1.get_default_graph().get_operations()
             all_tensor_names = {output.name for op in ops for output in op.outputs}
             tensor_dict = {}
@@ -30,7 +28,6 @@ def run_inference_for_single_image(image, graph):
                     tensor_dict[key] = tf.compat.v1.get_default_graph().get_tensor_by_name(tensor_name)
 
             if 'detection_masks' in tensor_dict:
-                # The following processing is only for single image
                 detection_boxes = tf.squeeze(tensor_dict['detection_boxes'], [0])
                 detection_masks = tf.squeeze(tensor_dict['detection_masks'], [0])
                 real_num_detection = tf.cast(tensor_dict['num_detections'][0], tf.int32)
@@ -39,15 +36,12 @@ def run_inference_for_single_image(image, graph):
                 detection_masks_reframed = utils_ops.reframe_box_masks_to_image_masks(
                     detection_masks, detection_boxes, image.shape[0], image.shape[1])
                 detection_masks_reframed = tf.cast(tf.greater(detection_masks_reframed, 0.5), tf.uint8)
-                # Follow the convention by adding back the batch dimension
                 tensor_dict['detection_masks'] = tf.expand_dims(detection_masks_reframed, 0)
 
             image_tensor = tf.compat.v1.get_default_graph().get_tensor_by_name('image_tensor:0')
 
-            # Run inference
             output_dict = sess.run(tensor_dict, feed_dict={image_tensor: np.expand_dims(image, 0)})
 
-            # all outputs are float32 numpy arrays, so convert types as appropriate
             output_dict['num_detections'] = int(output_dict['num_detections'][0])
             output_dict['detection_classes'] = output_dict['detection_classes'][0].astype(np.uint8)
             output_dict['detection_boxes'] = output_dict['detection_boxes'][0]
@@ -79,7 +73,7 @@ def load_category_index(path_to_labels, number_of_classes):
     return category_index
 
 
-def get_note_locations(image_path, model_path='resources/model.pb', mapping_path='resources/mapping.txt'):
+def get_musical_objects(image_path, model_path='resources/model.pb', mapping_path='resources/mapping.txt'):
     os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
     number_of_classes = 100
 
@@ -87,52 +81,12 @@ def get_note_locations(image_path, model_path='resources/model.pb', mapping_path
     category_index = load_category_index(mapping_path, number_of_classes)
 
     image = Image.open(image_path).convert("RGB")
+    width, height = image.size
     image_np = load_image_into_numpy_array(image)
 
     output_dict = run_inference_for_single_image(image_np, detection_graph)
 
-    print(output_dict)
-
-    return output_dict
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Performs detection over input image given a trained detector.')
-    parser.add_argument('--inference_graph', dest='inference_graph', type=str, required=True,
-                        help='Path to the frozen inference graph.')
-    parser.add_argument('--label_map', dest='label_map', type=str, default="mapping_all_classes.txt",
-                        help='Path to the label map, which is json-file that maps each category name '
-                             'to a unique number.')
-    parser.add_argument('--input_image', dest='input_image', type=str, required=True, help='Path to the input image.')
-    parser.add_argument('--output_image', dest='output_image', type=str, default='detection.jpg',
-                        help='Path to the output image.')
-    args = parser.parse_args()
-
-    # Uncomment the next line on Windows to run the evaluation on the CPU
-    os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
-
-    # Path to frozen detection graph. This is the actual model that is used for the object detection.
-    path_to_frozen_inference_graph = args.inference_graph
-    path_to_labels = args.label_map
-    number_of_classes = 1000
-    input_image = args.input_image
-    output_image = args.output_image
-
-    # Read frozen graph
-    detection_graph = load_detection_graph(path_to_frozen_inference_graph)
-    category_index = load_category_index(path_to_labels, number_of_classes)
-
-    image = Image.open(input_image).convert("RGB")
-
-    # the array based representation of the image will be used later in order to prepare the
-    # result image with boxes and labels on it.
-    image_np = load_image_into_numpy_array(image)
-
-    # Actual detection.
-    output_dict = run_inference_for_single_image(image_np, detection_graph)
-
-    # Visualization of the results of a detection.
-    vis_util.visualize_boxes_and_labels_on_image_array(
+    boxes, image = vis_util.visualize_boxes_and_labels_on_image_array(
         image_np,
         output_dict['detection_boxes'],
         output_dict['detection_classes'],
@@ -140,5 +94,16 @@ if __name__ == "__main__":
         category_index,
         instance_masks=output_dict.get('detection_masks'),
         use_normalized_coordinates=True,
-        line_thickness=2)
-    Image.fromarray(image_np).save(output_image)
+        line_thickness=2,
+        min_score_thresh=0.25)
+
+    objects = list()
+    for box, label in boxes.items():
+        x_min, x_max, y_min, y_max = box
+        box_center = (round((x_min + x_max) * width / 2), round((y_min + y_max) * height / 2))
+        label = label[0].split(':')[0]
+        objects.append((box_center, label))
+
+    Image.fromarray(image).save('output.jpg')
+
+    return objects
