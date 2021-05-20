@@ -1,18 +1,14 @@
-from tools import *
+import cv2 as cv
+
+from tools import detect_lines, reduce_objects
 from detection import get_musical_objects
 
 if __name__ == '__main__':
-    image = cv.imread('data/simple/02.png', 0)
+    image_path = 'data/simple/02.png'
 
-    image = binarize(image)
-    image = rotate(image)
+    image = cv.imread(image_path, 0)
     lines = detect_lines(image)
-    cv.imwrite('temp.png', image)
 
-    objects = get_musical_objects('temp.png')
+    objects = get_musical_objects(image_path)
 
-    notes = reduce_objects(objects)
-
-    music_input = classify_notes(notes, lines)
-
-    play(music_input)
+    notes = reduce_objects(objects, lines)

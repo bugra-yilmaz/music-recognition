@@ -158,6 +158,8 @@ def reduce_objects(objects, lines):
 
     notes = sorted(notes, key=lambda x: (x[2], x[0]))
 
+    return notes
+
 
 # Classifies musical notes according to previously detected staff lines
 def classify_notes(notes, lines):
