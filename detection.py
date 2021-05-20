@@ -75,7 +75,7 @@ def load_category_index(path_to_labels, number_of_classes):
 
 def get_musical_objects(image_path, model_path='resources/model.pb', mapping_path='resources/mapping.txt'):
     os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
-    number_of_classes = 100
+    number_of_classes = 1000
 
     detection_graph = load_detection_graph(model_path)
     category_index = load_category_index(mapping_path, number_of_classes)
@@ -100,9 +100,17 @@ def get_musical_objects(image_path, model_path='resources/model.pb', mapping_pat
     objects = list()
     for box, label in boxes.items():
         x_min, x_max, y_min, y_max = box
-        box_center = (round((x_min + x_max) * width / 2), round((y_min + y_max) * height / 2))
+        x_min, x_max, y_min, y_max = round(x_min * width), round(x_max * width), \
+            round(y_min * height), round(y_max * height)
+
         label = label[0].split(':')[0]
-        objects.append((box_center, label))
+        if label == 'beam':
+            x_borders = (x_min, x_max)
+            y_center = (y_min + y_max) / 2
+            objects.append(((x_borders, y_center), label))
+        elif label == 'notehead-full' or label == 'notehead-empty':
+            box_center = ((x_min + x_max) / 2, (y_min + y_max) / 2)
+            objects.append((box_center, label))
 
     Image.fromarray(image).save('output.jpg')
 
