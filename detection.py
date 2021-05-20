@@ -99,7 +99,7 @@ def get_musical_objects(image_path, model_path='resources/model.pb', mapping_pat
 
     objects = list()
     for box, label in boxes.items():
-        x_min, x_max, y_min, y_max = box
+        y_min, x_min, y_max, x_max = box
         x_min, x_max, y_min, y_max = round(x_min * width), round(x_max * width), \
             round(y_min * height), round(y_max * height)
 
