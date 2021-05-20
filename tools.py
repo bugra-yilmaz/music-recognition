@@ -43,9 +43,13 @@ def detect_lines(image):
     summed = np.sum(inverse, axis=1)
     maximum = max(summed)
 
-    rows = find_peaks(summed, maximum / 2)
+    lines = find_peaks(summed, maximum / 2)[0]
 
-    return rows[0]
+    line_groups = list()
+    for i in range(5, len(lines)+1, 5):
+        line_groups.append(lines[i-5:i])
+
+    return line_groups
 
 
 # Removes staff lines from the image
