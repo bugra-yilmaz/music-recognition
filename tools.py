@@ -99,9 +99,64 @@ def scale(corr):
     return scaled
 
 
+def assign_groups(objects, lines):
+    line_centers = [sum(line_group) / len(line_group) for line_group in lines]
+    indexes = list(range(len(line_centers)))
+
+    groups = list()
+    for o in objects:
+        y_center = o[0][1]
+        group = min(indexes, key=lambda i: abs(line_centers[i] - y_center))
+        groups.append(group)
+
+    return groups
+
+
+def is_quarter(note, group, beams):
+    x_center = note[0][0]
+    for beam in beams:
+        if beam[1] != group:
+            continue
+
+        x_min, x_max = beam[0]
+        if x_min < x_center < x_max:
+            return True
+
+    return False
+
+
 # Reduces recognized musical objects to musical notes
-def reduce_objects(objects):
-    pass
+def reduce_objects(objects, lines):
+    groups = assign_groups(objects, lines)
+
+    beams = list()
+    for i, o in enumerate(objects):
+        if o[1] != 'beam':
+            continue
+
+        x_min, x_max = o[0][0]
+        offset = (x_max - x_min) * 0.2
+        x_min = x_min - offset
+        x_max = x_max + offset
+
+        beam = (x_min, x_max), groups[i]
+        beams.append(beam)
+
+    notes = list()
+    for i, o in enumerate(objects):
+        group = groups[i]
+        if o[1] == 'notehead-empty':
+            note = (o[0][0], o[0][1], group, 2)
+            notes.append(note)
+
+        elif o[1] == 'notehead-full':
+            if is_quarter(o, group, beams):
+                note = (o[0][0], o[0][1], group, 0)
+            else:
+                note = (o[0][0], o[0][1], group, 1)
+            notes.append(note)
+
+    notes = sorted(notes, key=lambda x: (x[2], x[0]))
 
 
 # Classifies musical notes according to previously detected staff lines
