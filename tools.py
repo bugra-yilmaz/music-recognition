@@ -1,8 +1,11 @@
 import cv2 as cv
 import numpy as np
+from musicalbeeps import Player
 from scipy.signal import find_peaks
 from scipy.signal import fftconvolve
 from scipy.ndimage import interpolation
+
+STAFF_LINE_COUNT = 5
 
 
 # Applies Gaussian blur and Otsu's binarization method to the given grayscale image
@@ -46,8 +49,8 @@ def detect_lines(image):
     lines = find_peaks(summed, maximum / 2)[0]
 
     line_groups = list()
-    for i in range(5, len(lines)+1, 5):
-        line_groups.append(lines[i-5:i])
+    for i in range(STAFF_LINE_COUNT, len(lines)+1, STAFF_LINE_COUNT):
+        line_groups.append(lines[i-STAFF_LINE_COUNT:i])
 
     return line_groups
 
@@ -158,14 +161,57 @@ def reduce_objects(objects, lines):
 
     notes = sorted(notes, key=lambda x: (x[2], x[0]))
 
-    return notes
+    return notes, groups
+
+
+def classify_note(y_center, group_lines, line_distance):
+    interval_big = line_distance * 0.5
+    interval_small = line_distance * 0.25
+
+    if y_center < group_lines[0] - interval_big:
+        return 12
+    elif y_center < group_lines[0] - interval_small:
+        return 11
+    elif y_center > group_lines[-1] + interval_big:
+        return 0
+    elif y_center > group_lines[-1] + interval_small:
+        return 1
+
+    for i in range(1, len(group_lines)):
+        current_line = group_lines[-i]
+        next_line = group_lines[-i-1]
+        if abs(current_line - y_center) < interval_small:
+            return 2*(i-1) + 2
+        elif next_line + interval_small < y_center < current_line - interval_small:
+            return 2*(i-1) + 3
+
+    if abs(next_line - y_center) < interval_small:
+        return 2 * (len(group_lines) - 1) + 2
 
 
 # Classifies musical notes according to previously detected staff lines
-def classify_notes(notes, lines):
-    pass
+def get_music(notes, lines):
+    line_distance = sum([lines[i][j+1] - lines[i][j] for i in range(len(lines))
+                         for j in range(STAFF_LINE_COUNT - 1)]) / ((STAFF_LINE_COUNT - 1) * len(lines))
+
+    music = list()
+    for note in notes:
+        y_center, group, duration = note[1:]
+        group_lines = lines[group]
+        symbol = classify_note(y_center, group_lines, line_distance)
+        music.append((symbol, duration))
+
+    return music
 
 
 # Produces the music output from the input
-def play(music_input):
-    pass
+def play(music):
+    index_to_symbol = {0: 'C', 1: 'D', 2: 'E', 3: 'F', 4: 'G', 5: 'A', 6: 'B'}
+    duration_to_seconds = {0: 0.25, 1: 0.5, 2: 1}
+    player = Player(volume=0.3, mute_output=False)
+
+    for note, duration in music:
+        seconds = duration_to_seconds[duration]
+        letter = index_to_symbol[note % 7]
+        octave = str(4 + note // 7)
+        player.play_note(letter + octave, seconds)
