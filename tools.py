@@ -205,7 +205,7 @@ def get_music(notes, lines):
 
 
 # Produces the music output from the input
-def play(music):
+def play(music, save):
     index_to_symbol = {0: 'C', 1: 'D', 2: 'E', 3: 'F', 4: 'G', 5: 'A', 6: 'B'}
     duration_to_seconds = {0: 0.25, 1: 0.5, 2: 1}
     player = Player(volume=0.3, mute_output=False)
