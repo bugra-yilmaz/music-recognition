@@ -73,7 +73,7 @@ def load_category_index(path_to_labels, number_of_classes):
     return category_index
 
 
-def get_musical_objects(image_path, model_path='resources/model.pb', mapping_path='resources/mapping.txt'):
+def get_musical_objects(image_path, model_path, mapping_path='resources/mapping.txt'):
     os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
     number_of_classes = 1000
 
