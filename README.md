@@ -24,3 +24,12 @@ Then run:
 ```bash
 protoc object_detection/protos/*.proto --python_out=.
 ```
+
+## Run
+...
+
+## Further work
+- Complete *Run* section in the README.
+- Look for better performing pretrained musical object detection models.
+- Fix music playing logic to obtain correct sounds.  
+- Implement save mechanism in music playing part.
